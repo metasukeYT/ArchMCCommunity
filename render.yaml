@@ -1,20 +1,20 @@
 services:
   - type: web
     name: archmc-discord-bot
-    env: node
+    runtime: node
     plan: free
     rootDir: bot
     buildCommand: npm install
     startCommand: node index.js
+    healthCheckPath: /health
     envVars:
       - key: DISCORD_TOKEN
+        sync: false
+      - key: WEBHOOK_URL
         sync: false
       - key: CLIENT_ID
         value: "1569551679840591892"
       - key: ROLE_ID
         value: "1568130111243554868"
-      - key: WEBHOOK_URL
-        value: "https://discord.com/api/webhooks/1569495763116105758/--D7eY7jtum6MX_kMX4IkHI55OwD_fnqEXoULkGB2gwkkW0WONJMlplzFX96Dr3ncR8T"
-      - key: PORT
-        value: "10000"
-
+      - key: NODE_VERSION
+        value: "20"

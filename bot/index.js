@@ -132,10 +132,21 @@ function removeLinkByMcName(mcName) {
   return null;
 }
 
+// Normalize pasted tokens (full-width chars, odd dashes, spaces, quotes, zero-width chars)
+function normalizeToken(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  return raw
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\u2010-\u2015\u2212\u30FC\uFF0D]/g, '-')
+    .replace(/[`"'\u201C\u201D\u2018\u2019\s]/g, '')
+    .replace(/^token:/i, '');
+}
+
 // Token Verification Functions
 function verifyLinkToken(token) {
   if (!token || typeof token !== 'string') return null;
-  const parts = token.trim().split('-');
+  const parts = normalizeToken(token).split('-');
   if (parts.length !== 3 || parts[0].toUpperCase() !== 'LNK') return null;
 
   const mcName = parts[1];
@@ -155,11 +166,13 @@ function verifyLinkToken(token) {
 
 function verifyUnlinkToken(token) {
   if (!token || typeof token !== 'string') return null;
-  const parts = token.trim().split('-');
+  const parts = normalizeToken(token).split('-');
   if (parts.length !== 3 || parts[0].toUpperCase() !== 'UNL') return null;
 
   const mcName = parts[1];
   const hash = parts[2].toUpperCase();
+
+  if (!/^[a-zA-Z0-9_]{1,16}$/.test(mcName)) return null;
 
   const expectedHash = crypto
     .createHash('sha256')
@@ -576,10 +589,15 @@ client.on('interactionCreate', async interaction => {
 
       const rawToken = interaction.options.getString('token').trim();
       const mcName = verifyLinkToken(rawToken);
+      console.log(`[/link] user=${interaction.user.tag} verified=${mcName ? 'OK' : 'NG'}`);
+
+      if (!interaction.inGuild() || !interaction.member) {
+        return interaction.editReply({ content: '❌ このコマンドはサーバー内で実行してください。' });
+      }
 
       if (!mcName) {
         return interaction.editReply({
-          content: '❌ **無効なトークンです。**\nWebサイトで正しい認証トークンを発行し、入力してください。（例: `LNK-Steve-A1B2C3`）'
+          content: '❌ **無効なトークンです。**\nWebサイトに表示された `LNK-` から始まるトークン全体（MCIDとハッシュ6桁を含む）を、そのままコピーして貼り付けてください。（例: `LNK-Steve-A1B2C3`）'
         });
       }
 
@@ -618,7 +636,7 @@ client.on('interactionCreate', async interaction => {
       } catch (err) {
         console.error('Error in /link:', err);
         await interaction.editReply({
-          content: `⚠️ ロール付与中にエラーが発生しました。\nBotのロール順位をご確認ください。\nエラー: ${err.message}`
+          content: `⚠️ ロール付与中にエラーが発生しました。\nBotのロール順位（付与するロールより上にあること）と「ロールの管理」権限をご確認ください。\nエラー: ${err.message}`
         });
       }
     }
