@@ -31,11 +31,43 @@ const {
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const express = require('express');
+const cors = require('cors');
+
+// Process Error Handlers (Prevents Bot Crashes)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', err => {
+  console.error('⚠️ Uncaught Exception:', err);
+});
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID || '1569551679840591892';
 const ROLE_ID = process.env.ROLE_ID || '1568130111243554868';
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
+const PORT = process.env.PORT || 10000;
+
+// HTTP Health Check Server (Required for Render Web Service)
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('ArchMC Discord Auth & Giveaway Bot is online and running!');
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    botOnline: client.isReady(),
+    uptime: process.uptime()
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 HTTP Server listening on port ${PORT} (Render Health Check OK)`);
+});
 
 const SECRET_SALT = 'ARCHMC_JPEN_TOKEN_SALT_2026';
 
@@ -250,6 +282,58 @@ function buildGiveawayModal() {
   return modal;
 }
 
+// Fallback modal with standard text inputs (if Discord client/API rejects custom components in modal)
+function buildFallbackGiveawayModal() {
+  const modal = new ModalBuilder()
+    .setCustomId('giveaway_modal')
+    .setTitle('Create a Giveaway');
+
+  const durationInput = new TextInputBuilder()
+    .setCustomId('duration')
+    .setLabel('Duration *')
+    .setPlaceholder('Ex: 10 minutes')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const winnersInput = new TextInputBuilder()
+    .setCustomId('winners')
+    .setLabel('Number of Winners *')
+    .setValue('1')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const prizeInput = new TextInputBuilder()
+    .setCustomId('prize')
+    .setLabel('Prize *')
+    .setPlaceholder('Ex: ArchMC Money 150k')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  const descInput = new TextInputBuilder()
+    .setCustomId('description')
+    .setLabel('Description')
+    .setPlaceholder('Ex: Survival Money 150k Giveaway!')
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(false);
+
+  const roleInput = new TextInputBuilder()
+    .setCustomId('required_roles_text')
+    .setLabel('Required Role(s)')
+    .setPlaceholder('ロール名またはID（複数指定時はカンマ区切り、空欄で指定なし）')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(false);
+
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(durationInput),
+    new ActionRowBuilder().addComponents(winnersInput),
+    new ActionRowBuilder().addComponents(prizeInput),
+    new ActionRowBuilder().addComponents(descInput),
+    new ActionRowBuilder().addComponents(roleInput)
+  );
+
+  return modal;
+}
+
 // Build Giveaway Embed (Running or Ended)
 function createGiveawayEmbed(giveaway, isEnded = false, winners = []) {
   const endSec = Math.floor(giveaway.endTime / 1000);
@@ -443,12 +527,16 @@ async function registerSlashCommands() {
   }
 }
 
+client.on('error', err => {
+  console.error('⚠️ Discord Client Error:', err);
+});
+
 client.once('ready', async () => {
   console.log(`=========================================`);
   console.log(` ArchMC Auth & Giveaway Bot Online: ${client.user.tag}`);
   console.log(` Target Role ID: ${ROLE_ID}`);
   console.log(`=========================================`);
-  await registerSlashCommands();
+  registerSlashCommands().catch(err => console.error('Register commands error:', err));
   scheduleGiveaways();
 });
 
@@ -456,16 +544,31 @@ client.once('ready', async () => {
 // Interaction Handler (Commands, Modals, Buttons)
 // ==========================================
 client.on('interactionCreate', async interaction => {
+  try {
+    // 1. Slash Commands
+    if (interaction.isChatInputCommand()) {
+      const { commandName } = interaction;
 
-  // 1. Slash Commands
-  if (interaction.isChatInputCommand()) {
-    const { commandName } = interaction;
-
-    // --- /giveaway (Directly opens Modal with GUI Multi-Role Select) ---
-    if (commandName === 'giveaway') {
-      const modal = buildGiveawayModal();
-      return interaction.showModal(modal);
-    }
+      // --- /giveaway (Directly opens Modal with GUI Multi-Role Select) ---
+      if (commandName === 'giveaway') {
+        try {
+          const modal = buildGiveawayModal();
+          await interaction.showModal(modal);
+        } catch (err) {
+          if (err.code === 10062) {
+            console.warn('⚠️ /giveaway interaction timed out (10062).');
+            return;
+          }
+          console.warn('Could not show multi-role component modal, attempting fallback modal:', err.message);
+          try {
+            const fallbackModal = buildFallbackGiveawayModal();
+            await interaction.showModal(fallbackModal);
+          } catch (e2) {
+            console.error('Fallback modal error:', e2);
+          }
+        }
+        return;
+      }
 
     // --- /link <token> ---
     else if (commandName === 'link') {
@@ -818,6 +921,26 @@ client.on('interactionCreate', async interaction => {
         }
       }
 
+      // Check fallback text input if component was not used
+      if (selectedRoleIds.length === 0) {
+        try {
+          const textInput = interaction.fields.getTextInputValue('required_roles_text');
+          if (textInput && textInput.trim()) {
+            const parts = textInput.split(/[,、\s]+/);
+            for (const p of parts) {
+              const clean = p.replace(/^<@&(\d+)>$/, '$1').trim();
+              if (!clean) continue;
+              const r = interaction.guild ? (interaction.guild.roles.cache.get(clean) || interaction.guild.roles.cache.find(role => role.name.toLowerCase() === clean.toLowerCase())) : null;
+              if (r) {
+                selectedRoleIds.push(r.id);
+              } else if (/^\d+$/.test(clean)) {
+                selectedRoleIds.push(clean);
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
       const giveawayId = `ga_${Date.now()}`;
       const endTime = Date.now() + durationMs;
 
@@ -932,6 +1055,13 @@ client.on('interactionCreate', async interaction => {
         console.error('Error updating giveaway entry:', err);
       }
     }
+  }
+  } catch (err) {
+    if (err.code === 10062) {
+      console.warn('⚠️ Interaction expired or unknown (10062), safely ignored.');
+      return;
+    }
+    console.error('⚠️ Interaction Error:', err);
   }
 });
 
