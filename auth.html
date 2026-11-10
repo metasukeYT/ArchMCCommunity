@@ -87,145 +87,168 @@
       
       <!-- Top Title Header -->
       <div class="auth-header">
-        <span class="badge badge-cyan" data-i18n="auth_badge">SECURE VERIFICATION</span>
+        <span class="badge badge-cyan" data-i18n="auth_badge">TOKEN VERIFICATION SYSTEM</span>
         <h1 class="auth-title" data-i18n="auth_title">ArchMC プレイヤー認証</h1>
-        <p class="auth-desc" data-i18n="auth_desc">Minecraft IDとDiscordユーザー名を連携し、コミュニティロールを自動で受け取りましょう。※認証解除はDiscordサーバー内でAdminがロールを外すことで行われます。</p>
+        <p class="auth-desc" data-i18n="auth_token_desc">Minecraft IDを入力して認証トークンを発行し、Discordサーバーで /link コマンドを実行してください。</p>
       </div>
 
       <!-- Card Container -->
       <div class="auth-card">
         
-        <div id="verifyTabContent">
+        <!-- ================= STATE 1: INPUT FORM (Generate Token) ================= -->
+        <div id="stateInputBox">
+          <!-- Minecraft Skin Preview -->
+          <div class="avatar-preview-box">
+            <div class="avatar-frame">
+              <img id="avatarPreview" src="https://mc-heads.net/avatar/Steve/100" alt="Minecraft Skin Avatar">
+            </div>
+            <div class="avatar-info">
+              <h4 data-i18n="form_avatar_title">アバタープレビュー</h4>
+              <p data-i18n="form_avatar_hint">MCIDを入力するとスキンが表示されます</p>
+            </div>
+          </div>
 
-          <!-- 1. Form view (When user is NOT yet verified on this device) -->
-          <div id="verifyFormBox">
-            <!-- Minecraft Skin Preview -->
-            <div class="avatar-preview-box">
-              <div class="avatar-frame">
-                <img id="avatarPreview" src="https://mc-heads.net/avatar/Steve/100" alt="Minecraft Skin Avatar">
+          <!-- Token Generation Form -->
+          <form id="tokenGenerateForm">
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="mcidInput" class="form-label">
+                  <span>🎮</span>
+                  <span data-i18n="label_mcid">ArchMC Minecraft ID (MCID)</span>
+                </label>
               </div>
-              <div class="avatar-info">
-                <h4 data-i18n="form_avatar_title">アバタープレビュー</h4>
-                <p data-i18n="form_avatar_hint">MCIDを入力するとスキンが表示されます</p>
+              <div class="input-wrapper">
+                <span class="input-icon">⛏️</span>
+                <input type="text" id="mcidInput" class="form-input" placeholder="例: Steve" data-i18n-placeholder="placeholder_mcid" required autocomplete="off" maxlength="16">
               </div>
+              <p class="form-hint" data-i18n="hint_mcid">大文字・小文字を正確に入力してください</p>
             </div>
 
-            <!-- Verification Form -->
-            <form id="verifyForm">
-              <!-- MCID Field -->
-              <div class="form-group">
-                <div class="form-label-row">
-                  <label for="mcidInput" class="form-label">
-                    <span>🎮</span>
-                    <span data-i18n="label_mcid">ArchMC Minecraft ID (MCID)</span>
-                  </label>
+            <!-- Role to be granted -->
+            <div class="role-box">
+              <div class="role-info-left">
+                <div class="role-icon">🎖️</div>
+                <div class="role-details">
+                  <h5 data-i18n="label_role_grant">付与されるロール</h5>
+                  <div class="role-name" data-i18n="role_name_badge">Verified Player</div>
                 </div>
-                <div class="input-wrapper">
-                  <span class="input-icon">⛏️</span>
-                  <input type="text" id="mcidInput" class="form-input" placeholder="例: Steve" data-i18n-placeholder="placeholder_mcid" required autocomplete="off" maxlength="16">
-                </div>
-                <p class="form-hint" data-i18n="hint_mcid">大文字・小文字を正確に入力してください</p>
               </div>
+              <span class="role-id-badge">Role: 1568130111243554868</span>
+            </div>
 
-              <!-- Discord ID Field -->
-              <div class="form-group">
-                <div class="form-label-row">
-                  <label for="discordInput" class="form-label">
-                    <span>💬</span>
-                    <span data-i18n="label_discord_id">Discord ユーザー名</span>
-                  </label>
-                  <button type="button" class="help-link" id="discordHelpBtn" data-i18n="link_discord_help">
-                    Discordユーザー名の確認方法は？
-                  </button>
-                </div>
-                <div class="input-wrapper">
-                  <span class="input-icon">@</span>
-                  <input type="text" id="discordInput" class="form-input" placeholder="例: metasukech_52692" data-i18n-placeholder="placeholder_discord_id" required autocomplete="off" maxlength="32">
-                </div>
-                <p class="form-hint" data-i18n="hint_discord_id">Discordのユーザー名（小文字・数字・アンダースコア）を入力してください</p>
-              </div>
+            <!-- Submit Button -->
+            <button type="submit" id="submitGenerateBtn" class="btn btn-primary auth-submit-btn">
+              <span>⚡</span>
+              <span data-i18n="btn_generate_token">認証トークンを発行する</span>
+            </button>
+          </form>
+        </div>
 
-              <!-- Granted Role Banner -->
-              <div class="role-box">
-                <div class="role-info-left">
-                  <div class="role-icon">🎖️</div>
-                  <div class="role-details">
-                    <h5 data-i18n="label_role_grant">付与されるロール</h5>
-                    <div class="role-name" data-i18n="role_name_badge">Verified Player</div>
-                  </div>
-                </div>
-                <span class="role-id-badge" title="Role ID">Role: 1568130111243554868</span>
-              </div>
+        <!-- ================= STATE 2: TOKEN GENERATED (Waiting for Discord /link) ================= -->
+        <div id="stateTokenBox" class="hidden">
+          <div class="verified-badge-top">
+            <span class="badge badge-cyan" data-i18n="badge_token_ready">トークン発行完了</span>
+          </div>
 
-              <!-- Submit Button -->
-              <button type="submit" id="submitVerifyBtn" class="btn btn-primary auth-submit-btn">
-                <span>⚡</span>
-                <span data-i18n="btn_submit_verify">認証してロールを受け取る</span>
+          <div class="verified-avatar-wrapper">
+            <img id="tokenAvatar" src="https://mc-heads.net/avatar/Steve/100" alt="Player Avatar">
+          </div>
+
+          <h2 class="verified-title" style="margin-bottom: 6px;">
+            <span id="tokenMcid">Steve</span> の認証トークン
+          </h2>
+          <p class="verified-desc" data-i18n="token_instruction">
+            Discordサーバーで以下のコマンドを送信すると、連携が完了しロールが自動付与されます。
+          </p>
+
+          <!-- Generated Token Box -->
+          <div class="token-result-card">
+            <div class="token-label">認証トークン (Link Token)</div>
+            <div class="token-value-box">
+              <span class="token-code" id="linkTokenDisplay">LNK-Steve-XXXXXX</span>
+              <button type="button" class="btn-copy-token" id="copyTokenBtn">
+                <span>📋</span> <span>コピー</span>
               </button>
-            </form>
-          </div>
-
-          <!-- 2. Already Verified State Box (Hidden by default, shown if authenticated) -->
-          <div id="verifiedStatusBox" class="verified-box hidden">
-            <div class="verified-badge-top">
-              <span class="badge badge-emerald" data-i18n="verified_status_badge">認証済み</span>
-            </div>
-            
-            <div class="verified-avatar-wrapper">
-              <img id="verifiedAvatar" src="https://mc-heads.net/avatar/Steve/100" alt="Verified Minecraft Avatar">
-            </div>
-
-            <h2 class="verified-title" data-i18n="verified_status_title">認証が完了しています</h2>
-            <p class="verified-desc" data-i18n="verified_status_desc">この端末では現在Cookieによって連携情報が保存されています。</p>
-
-            <div class="verified-meta-list">
-              <div class="verified-meta-item">
-                <span class="verified-meta-label" data-i18n="info_mcid_label">登録MCID</span>
-                <span class="verified-meta-value" id="verifiedMcid">-</span>
-              </div>
-              <div class="verified-meta-item">
-                <span class="verified-meta-label" data-i18n="info_discord_label">登録Discord ユーザー名</span>
-                <span class="verified-meta-value" id="verifiedDiscord">-</span>
-              </div>
-              <div class="verified-meta-item">
-                <span class="verified-meta-label" data-i18n="info_role_label">付与ロール</span>
-                <span class="verified-meta-value" id="verifiedRole">Verified Player (1568130111243554868)</span>
-              </div>
-              <div class="verified-meta-item">
-                <span class="verified-meta-label" data-i18n="info_date_label">認証日時</span>
-                <span class="verified-meta-value" id="verifiedDate">-</span>
-              </div>
-            </div>
-
-            <div class="unlink-admin-notice" style="margin-top: 24px; padding: 14px 18px; background: rgba(139, 0, 0, 0.15); border: 1px solid rgba(139, 0, 0, 0.35); border-radius: var(--radius-md); font-size: 0.86rem; color: var(--text-muted); line-height: 1.6;">
-              <span style="color: #ff6b6b; font-weight: 600;">ℹ️ 認証解除について</span><br>
-              <span data-i18n="admin_unlink_notice">認証の解除は、Discordサーバー内でAdmin（管理者）などの権限保持者が「Verified Player」ロールを外すことでのみ行われます。サイトからの解除操作はできません。</span>
             </div>
           </div>
 
+          <!-- Command helper box -->
+          <div class="command-helper-box">
+            <div class="command-title">Discordで実行するコマンド：</div>
+            <div class="command-code-row">
+              <code id="linkCommandText">/link token: LNK-Steve-XXXXXX</code>
+              <button type="button" class="btn-copy-cmd" id="copyCmdBtn">
+                <span>📋</span> コマンドコピー
+              </button>
+            </div>
+          </div>
+
+          <!-- Discord Action Button -->
+          <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+            <a href="https://discord.gg/uMGbzPVT77" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="flex: 1;">
+              <span>💬</span> <span>Discordを開く</span>
+            </a>
+            <button type="button" class="btn btn-primary" id="confirmLinkedBtn" style="flex: 1;">
+              <span>✅</span> <span data-i18n="btn_i_linked">連携を完了しました</span>
+            </button>
+          </div>
+
+          <div style="text-align: center; margin-top: 18px;">
+            <button type="button" class="btn-text-link reset-link-trigger" data-i18n="btn_reinput_mcid">
+              別のMinecraft IDを入力し直す
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STATE 3: LINKED (Show Unlink Token) ================= -->
+        <div id="stateLinkedBox" class="hidden">
+          <div class="verified-badge-top">
+            <span class="badge badge-emerald" data-i18n="verified_status_badge">認証・連携完了</span>
+          </div>
+
+          <div class="verified-avatar-wrapper">
+            <img id="linkedAvatar" src="https://mc-heads.net/avatar/Steve/100" alt="Player Avatar">
+          </div>
+
+          <h2 class="verified-title" style="margin-bottom: 6px;">
+            <span id="linkedMcid">Steve</span> は連携されています
+          </h2>
+          <p class="verified-desc" data-i18n="unlink_token_desc">
+            Discordサーバーでロールが付与されています。連携を解除したい場合は、以下の解除用トークンを使用してDiscord上で解除してください。
+          </p>
+
+          <!-- Unlink Token Box -->
+          <div class="token-result-card unlink-card">
+            <div class="token-label" style="color: #ff8585;">解除用トークン (Unlink Token)</div>
+            <div class="token-value-box">
+              <span class="token-code" id="unlinkTokenDisplay">UNL-Steve-XXXXXX</span>
+              <button type="button" class="btn-copy-token" id="copyUnlinkTokenBtn">
+                <span>📋</span> <span>コピー</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Unlink Command Box -->
+          <div class="command-helper-box unlink-cmd-box">
+            <div class="command-title">解除用Discordコマンド：</div>
+            <div class="command-code-row">
+              <code id="unlinkCommandText">/unlink token: UNL-Steve-XXXXXX</code>
+              <button type="button" class="btn-copy-cmd" id="copyUnlinkCmdBtn">
+                <span>📋</span> コマンドコピー
+              </button>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <button type="button" class="btn-text-link reset-link-trigger" style="color: var(--text-dim);" data-i18n="btn_reset_device">
+              この端末の保存状態をリセットする
+            </button>
+          </div>
         </div>
 
       </div>
     </div>
   </main>
-
-  <!-- Discord ID Help Modal -->
-  <div class="modal-overlay" id="helpModal">
-    <div class="modal-card">
-      <h3 data-i18n="modal_help_title">Discord ユーザー名の確認手順</h3>
-      <ul class="modal-steps">
-        <li data-i18n="modal_step_1">Discord画面の左下（PC版）または右下プロフィールアイコン（スマホ版）を確認します。</li>
-        <li data-i18n="modal_step_2">表示名の下に薄く表示されている英数字（例: metasukech_52692）が「ユーザー名」です。</li>
-        <li data-i18n="modal_step_3">クリックまたはタップするとユーザー名をコピーできます。</li>
-      </ul>
-      <div class="modal-note" data-i18n="modal_help_note">
-        ※ ニックネーム（表示名）ではなく、半角英数字の固有ID名（例: metasukech_52692）を入力してください。
-      </div>
-      <button type="button" class="btn btn-secondary modal-close-btn modal-close-trigger" data-i18n="btn_modal_close">
-        理解しました
-      </button>
-    </div>
-  </div>
 
   <!-- Site Footer -->
   <footer class="site-footer">

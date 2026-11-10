@@ -1,10 +1,9 @@
-// ===== Auth Page Logic =====
+// ===== ArchMC Auth - Token-Based Verification System =====
 
-const BOT_API_URL = window.BOT_API_URL || 'http://localhost:3000';
-const WEBHOOK_URL = 'https://discord.com/api/webhooks/1569495763116105758/--D7eY7jtum6MX_kMX4IkHI55OwD_fnqEXoULkGB2gwkkW0WONJMlplzFX96Dr3ncR8T';
+const SECRET_SALT = 'ARCHMC_JPEN_TOKEN_SALT_2026';
 const ROLE_ID = '1568130111243554868';
 
-// ===== Cookie Helpers =====
+// Cookie Helpers
 function setCookie(name, value, days) {
     const expires = new Date(Date.now() + days * 864e5).toUTCString();
     document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
@@ -19,46 +18,34 @@ function deleteCookie(name) {
     document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax';
 }
 
-// ===== Auth Data Management =====
-function saveAuthData(mcName, discordId) {
-    const data = {
-        mcName: mcName,
-        discordId: discordId,
-        authDate: new Date().toISOString(),
-        roleId: ROLE_ID
-    };
-    setCookie('archmc_auth', JSON.stringify(data), 365); // 1年保存
+// Compute SHA-256 Hash 6 chars (Sync with Bot)
+async function computeHash6(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hex.substring(0, 6).toUpperCase();
 }
 
-function getAuthData() {
-    const raw = getCookie('archmc_auth');
-    if (!raw) return null;
-    try {
-        return JSON.parse(raw);
-    } catch {
-        return null;
-    }
+// Generate Link Token: LNK-<MCID>-<HASH6>
+async function generateLinkToken(mcName) {
+    const hash = await computeHash6(`LINK:${mcName}:${SECRET_SALT}`);
+    return `LNK-${mcName}-${hash}`;
 }
 
-function clearAuthData() {
-    deleteCookie('archmc_auth');
+// Generate Unlink Token: UNL-<MCID>-<HASH6>
+async function generateUnlinkToken(mcName) {
+    const hash = await computeHash6(`UNLINK:${mcName}:${SECRET_SALT}`);
+    return `UNL-${mcName}-${hash}`;
 }
 
-function isAuthenticated() {
-    return getAuthData() !== null;
-}
-
-// ===== Validation =====
+// Validation
 function validateMcName(name) {
     return /^[a-zA-Z0-9_]{1,16}$/.test(name);
 }
 
-function validateDiscordId(id) {
-    // Discord username: 2-32 chars, lowercase letters, numbers, underscores, periods
-    return /^[a-z0-9_.]{2,32}$/.test(id);
-}
-
-// ===== Avatar Preview =====
+// Avatar Preview
 let avatarDebounce = null;
 function updateAvatarPreview(mcName) {
     clearTimeout(avatarDebounce);
@@ -67,226 +54,154 @@ function updateAvatarPreview(mcName) {
         if (avatarImg && mcName && validateMcName(mcName)) {
             avatarImg.src = 'https://mc-heads.net/avatar/' + encodeURIComponent(mcName) + '/100';
         }
-    }, 500);
+    }, 400);
 }
 
-// ===== UI State Management =====
-function showVerifiedState() {
-    const authData = getAuthData();
-    if (!authData) return;
-
-    const formBox = document.getElementById('verifyFormBox');
-    const statusBox = document.getElementById('verifiedStatusBox');
-
-    if (formBox) formBox.classList.add('hidden');
-    if (statusBox) {
-        statusBox.classList.remove('hidden');
-
-        // Populate data
-        const mcidEl = document.getElementById('verifiedMcid');
-        const discordEl = document.getElementById('verifiedDiscord');
-        const dateEl = document.getElementById('verifiedDate');
-        const avatarEl = document.getElementById('verifiedAvatar');
-
-        if (mcidEl) mcidEl.textContent = authData.mcName;
-        if (discordEl) discordEl.textContent = authData.discordId;
-        if (dateEl) {
-            const date = new Date(authData.authDate);
-            const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ja';
-            dateEl.textContent = date.toLocaleString(lang === 'ja' ? 'ja-JP' : 'en-US', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
+// Copy to clipboard helper
+async function copyTextToClipboard(text, btnElement, successMsg) {
+    try {
+        await navigator.clipboard.writeText(text);
+        if (btnElement) {
+            const originalHTML = btnElement.innerHTML;
+            btnElement.innerHTML = `<span>✓</span> <span>${successMsg || 'コピー完了!'}</span>`;
+            btnElement.classList.add('copied');
+            setTimeout(() => {
+                btnElement.innerHTML = originalHTML;
+                btnElement.classList.remove('copied');
+            }, 2000);
         }
-        if (avatarEl) {
-            avatarEl.src = 'https://mc-heads.net/avatar/' + encodeURIComponent(authData.mcName) + '/100';
-        }
+    } catch (err) {
+        console.error('Failed to copy text:', err);
     }
 }
 
-function showFormState() {
-    const formBox = document.getElementById('verifyFormBox');
-    const statusBox = document.getElementById('verifiedStatusBox');
+// UI State Management
+// States: 'input' -> 'token-generated' -> 'linked'
+async function renderState() {
+    const authDataRaw = getCookie('archmc_auth_link');
+    const inputCard = document.getElementById('stateInputBox');
+    const tokenCard = document.getElementById('stateTokenBox');
+    const linkedCard = document.getElementById('stateLinkedBox');
 
-    if (formBox) formBox.classList.remove('hidden');
-    if (statusBox) statusBox.classList.add('hidden');
-}
+    if (!inputCard || !tokenCard || !linkedCard) return;
 
-// ===== Send Webhook =====
-async function sendWebhook(type, mcName, discordId) {
-    const now = new Date().toISOString();
-    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ja';
+    if (!authDataRaw) {
+        // State 1: Input form
+        inputCard.classList.remove('hidden');
+        tokenCard.classList.add('hidden');
+        linkedCard.classList.add('hidden');
+    } else {
+        try {
+            const authData = JSON.parse(authDataRaw);
 
-    if (type === 'verify') {
-        const embed = {
-            title: lang === 'ja' ? '⚡ プレイヤー認証完了（自動連携）' : '⚡ Verification Completed (Auto-Linked)',
-            color: 0x10B981,
-            fields: [
-                {
-                    name: lang === 'ja' ? '🎮 ArchMC ゲーム内名前' : '🎮 ArchMC In-Game Name',
-                    value: '`' + mcName + '`',
-                    inline: true
-                },
-                {
-                    name: lang === 'ja' ? '💬 Discord ユーザー名' : '💬 Discord Username',
-                    value: '`' + discordId + '`',
-                    inline: true
-                },
-                {
-                    name: lang === 'ja' ? '🏷️ 付与ロール' : '🏷️ Assigned Role',
-                    value: '<@&' + ROLE_ID + '>',
-                    inline: false
-                },
-                {
-                    name: lang === 'ja' ? '👤 連携対象' : '👤 Target User',
-                    value: '@' + discordId,
-                    inline: true
+            if (authData.status === 'linked') {
+                // State 3: Linked (Show Unlink Token)
+                inputCard.classList.add('hidden');
+                tokenCard.classList.add('hidden');
+                linkedCard.classList.remove('hidden');
+
+                const unlinkToken = await generateUnlinkToken(authData.mcName);
+
+                document.getElementById('linkedMcid').textContent = authData.mcName;
+                document.getElementById('linkedAvatar').src = `https://mc-heads.net/avatar/${encodeURIComponent(authData.mcName)}/100`;
+                document.getElementById('unlinkTokenDisplay').textContent = unlinkToken;
+                document.getElementById('unlinkCommandText').textContent = `/unlink token: ${unlinkToken}`;
+
+                const copyUnlinkBtn = document.getElementById('copyUnlinkTokenBtn');
+                if (copyUnlinkBtn) {
+                    copyUnlinkBtn.onclick = () => copyTextToClipboard(unlinkToken, copyUnlinkBtn, 'コピーしました');
                 }
-            ],
-            footer: { text: 'ArchMC JP/EN Community Auto-Auth' },
-            timestamp: now
-        };
+                const copyUnlinkCmdBtn = document.getElementById('copyUnlinkCmdBtn');
+                if (copyUnlinkCmdBtn) {
+                    copyUnlinkCmdBtn.onclick = () => copyTextToClipboard(`/unlink token: ${unlinkToken}`, copyUnlinkCmdBtn, 'コマンドをコピーしました');
+                }
 
-        const payload = {
-            username: 'ArchMC Auth Bot',
-            avatar_url: '',
-            content: lang === 'ja'
-                ? `⚡ **【自動連携完了】** プレイヤー \`${mcName}\` と Discord \`@${discordId}\` の連携が完了しました！\nロール: <@&${ROLE_ID}>`
-                : `⚡ **[Auto-Linked]** Player \`${mcName}\` has been linked with Discord \`@${discordId}\`!\nRole: <@&${ROLE_ID}>`,
-            embeds: [embed]
-        };
+            } else {
+                // State 2: Link Token Generated, waiting for user to run /link in Discord
+                inputCard.classList.add('hidden');
+                tokenCard.classList.remove('hidden');
+                linkedCard.classList.add('hidden');
 
-        return fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+                const linkToken = await generateLinkToken(authData.mcName);
+
+                document.getElementById('tokenMcid').textContent = authData.mcName;
+                document.getElementById('tokenAvatar').src = `https://mc-heads.net/avatar/${encodeURIComponent(authData.mcName)}/100`;
+                document.getElementById('linkTokenDisplay').textContent = linkToken;
+                document.getElementById('linkCommandText').textContent = `/link token: ${linkToken}`;
+
+                const copyTokenBtn = document.getElementById('copyTokenBtn');
+                if (copyTokenBtn) {
+                    copyTokenBtn.onclick = () => copyTextToClipboard(linkToken, copyTokenBtn, 'コピーしました');
+                }
+                const copyCmdBtn = document.getElementById('copyCmdBtn');
+                if (copyCmdBtn) {
+                    copyCmdBtn.onclick = () => copyTextToClipboard(`/link token: ${linkToken}`, copyCmdBtn, 'コマンドをコピーしました');
+                }
+            }
+        } catch (e) {
+            deleteCookie('archmc_auth_link');
+            inputCard.classList.remove('hidden');
+            tokenCard.classList.add('hidden');
+            linkedCard.classList.add('hidden');
+        }
     }
 }
 
-// ===== Handle Verify Form Submit =====
-async function handleVerifySubmit(e) {
+// Handle Generate Token Form
+async function handleGenerateToken(e) {
     e.preventDefault();
 
     const mcName = document.getElementById('mcidInput').value.trim();
-    const discordId = document.getElementById('discordInput').value.trim();
-    const submitBtn = document.getElementById('submitVerifyBtn');
-
-    // Validate
-    let hasError = false;
     if (!mcName || !validateMcName(mcName)) {
         document.getElementById('mcidInput').classList.add('error');
-        hasError = true;
+        return;
     }
-    if (!discordId || !validateDiscordId(discordId)) {
-        document.getElementById('discordInput').classList.add('error');
-        hasError = true;
-    }
-    if (hasError) return;
 
-    // Loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner"></span><span>認証＆ロール付与中...</span>';
+    // Save pending state in cookie
+    const data = {
+        mcName: mcName,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+    };
+    setCookie('archmc_auth_link', JSON.stringify(data), 30); // 30 days
+
+    await renderState();
+}
+
+// Confirm Link in Discord was completed
+async function handleConfirmLinked() {
+    const authDataRaw = getCookie('archmc_auth_link');
+    if (!authDataRaw) return;
 
     try {
-        let roleGranted = false;
-
-        // Try calling Discord Bot API first (for instant role grant)
-        try {
-            const apiRes = await fetch(`${BOT_API_URL}/api/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mcName, discordUsername: discordId })
-            });
-
-            if (apiRes.ok) {
-                const result = await apiRes.json();
-                if (result.success) {
-                    roleGranted = true;
-                }
-            } else {
-                const errorData = await apiRes.json().catch(() => ({}));
-                if (errorData.error) {
-                    alert(errorData.error);
-                    return;
-                }
-            }
-        } catch (botErr) {
-            // Bot API offline or not reachable from client: fallback to Webhook
-            console.log('Bot API unreachable, fallback to webhook:', botErr.message);
-        }
-
-        // Send Webhook notification (if not already handled by bot)
-        if (!roleGranted) {
-            await sendWebhook('verify', mcName, discordId);
-        }
-
-        // Save to cookie (1 year)
-        saveAuthData(mcName, discordId);
-        // Show verified state immediately
-        showVerifiedState();
-
-    } catch (error) {
-        console.error('Auth error:', error);
-        const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ja';
-        alert(lang === 'ja' ? '通信エラーが発生しました。時間をおいて再度お試しください。' : 'A connection error occurred. Please try again later.');
-    } finally {
-        submitBtn.disabled = false;
-        const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ja';
-        submitBtn.innerHTML = '<span>⚡</span><span>' + (lang === 'ja' ? '認証してロールを受け取る' : 'Verify & Get Role') + '</span>';
+        const authData = JSON.parse(authDataRaw);
+        authData.status = 'linked';
+        authData.linkedAt = new Date().toISOString();
+        setCookie('archmc_auth_link', JSON.stringify(authData), 365); // 1 year
+        await renderState();
+    } catch (e) {
+        console.error(e);
     }
 }
 
-// ===== Discord ID Help Modal =====
-function initHelpModal() {
-    const helpBtn = document.getElementById('discordHelpBtn');
-    const modal = document.getElementById('helpModal');
-    if (!helpBtn || !modal) return;
-
-    helpBtn.addEventListener('click', () => {
-        modal.classList.add('open');
-    });
-
-    // Close triggers
-    modal.querySelectorAll('.modal-close-trigger').forEach(el => {
-        el.addEventListener('click', () => {
-            modal.classList.remove('open');
-        });
-    });
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.remove('open');
-        }
-    });
+// Reset / Re-link another account
+function handleResetLink() {
+    const confirmMsg = '連携状態のリセットを行いますか？\n（※Discord側のロール削除はDiscord上で /unlink を実行してください）';
+    if (confirm(confirmMsg)) {
+        deleteCookie('archmc_auth_link');
+        renderState();
+    }
 }
 
-// ===== Spinner CSS injection =====
-function injectSpinnerCSS() {
-    if (document.getElementById('spinner-style')) return;
-    const style = document.createElement('style');
-    style.id = 'spinner-style';
-    style.textContent = '.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:auth-spin .6s linear infinite}@keyframes auth-spin{to{transform:rotate(360deg)}}.hidden{display:none!important}';
-    document.head.appendChild(style);
-}
-
-// ===== Initialize =====
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    injectSpinnerCSS();
-    initHelpModal();
+    renderState();
 
-    // Check if already authenticated
-    if (isAuthenticated()) {
-        showVerifiedState();
+    const form = document.getElementById('tokenGenerateForm');
+    if (form) {
+        form.addEventListener('submit', handleGenerateToken);
     }
 
-    // Verify form submit
-    const verifyForm = document.getElementById('verifyForm');
-    if (verifyForm) {
-        verifyForm.addEventListener('submit', handleVerifySubmit);
-    }
-
-    // MCID input: avatar preview + clear error
     const mcidInput = document.getElementById('mcidInput');
     if (mcidInput) {
         mcidInput.addEventListener('input', () => {
@@ -295,12 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Discord username input: allow lowercase letters, numbers, underscores, periods
-    const discordInput = document.getElementById('discordInput');
-    if (discordInput) {
-        discordInput.addEventListener('input', () => {
-            discordInput.value = discordInput.value.toLowerCase().replace(/[^a-z0-9_.]/g, '');
-            discordInput.classList.remove('error');
-        });
+    const confirmBtn = document.getElementById('confirmLinkedBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', handleConfirmLinked);
     }
+
+    const resetBtns = document.querySelectorAll('.reset-link-trigger');
+    resetBtns.forEach(btn => {
+        btn.addEventListener('click', handleResetLink);
+    });
 });

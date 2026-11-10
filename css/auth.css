@@ -497,6 +497,131 @@
   display: none !important;
 }
 
+/* =========================================================
+   Token-Based Verification UI Components
+   ========================================================= */
+
+.token-result-card {
+  background: rgba(139, 0, 0, 0.12);
+  border: 1px solid rgba(139, 0, 0, 0.45);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin: 22px 0 16px;
+  text-align: left;
+}
+
+.token-result-card.unlink-card {
+  background: rgba(80, 10, 15, 0.22);
+  border-color: rgba(180, 20, 30, 0.4);
+}
+
+.token-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #ff9999;
+  margin-bottom: 8px;
+}
+
+.token-value-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.token-code {
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  word-break: break-all;
+}
+
+.btn-copy-token,
+.btn-copy-cmd {
+  background: rgba(139, 0, 0, 0.35);
+  border: 1px solid rgba(139, 0, 0, 0.6);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.btn-copy-token:hover,
+.btn-copy-cmd:hover {
+  background: #8b0000;
+  transform: translateY(-1px);
+}
+
+.btn-copy-token.copied,
+.btn-copy-cmd.copied {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+/* Command Helper Box */
+.command-helper-box {
+  background: rgba(14, 18, 28, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.command-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.command-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.command-code-row code {
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #ff9999;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.btn-text-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.btn-text-link:hover {
+  color: #fff;
+}
+
 @media (max-width: 600px) {
   .auth-card {
     padding: 24px 18px;

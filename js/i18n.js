@@ -38,12 +38,12 @@ const I18N_DATA = {
     // Index How to verify
     how_tag: "VERIFICATION STEPS",
     how_heading: "認証の簡単な流れ",
-    how_step_1_title: "1. 情報を準備",
-    how_step_1_desc: "ArchMCで使用しているMinecraft IDと、Discordのユーザー名（例: metasukech_52692）を確認します。",
-    how_step_2_title: "2. 認証ページで送信",
-    how_step_2_desc: "認証フォームに入力して送信ボタンを押すと、自動的に連携処理が行われます。",
-    how_step_3_title: "3. ロール自動付与",
-    how_step_3_desc: "認証完了と同時に専用ロール（Role ID: 1568130111243554868）が付与されます。Cookieに認証情報が保存されます。",
+    how_step_1_title: "1. トークン発行",
+    how_step_1_desc: "サイト上でMinecraft ID（MCID）を入力し、専用の認証トークンを発行します。",
+    how_step_2_title: "2. Discordで /link 実行",
+    how_step_2_desc: "Discordサーバーで /link token: [発行されたトークン] を送信します。",
+    how_step_3_title: "3. ロール付与＆Unlink生成",
+    how_step_3_desc: "ロールが自動付与され連携完了。サイト側には解除用（Unlink）トークンが表示されます。",
 
     // Index Rules
     rules_tag: "RULES & GUIDELINES",
@@ -56,9 +56,9 @@ const I18N_DATA = {
     rule_3_desc: "各チャンネルの言語設定を守り、翻訳ツール等を活用しながら仲良くコミュニケーションをとりましょう。",
 
     // Auth Page
-    auth_badge: "SECURE VERIFICATION",
+    auth_badge: "TOKEN VERIFICATION SYSTEM",
     auth_title: "ArchMC プレイヤー認証",
-    auth_desc: "Minecraft IDとDiscordユーザー名を連携し、コミュニティロールを自動で受け取りましょう。※認証解除はDiscordサーバー内でAdminがロールを外すことで行われます。",
+    auth_token_desc: "Minecraft IDを入力して認証トークンを発行し、Discordサーバーで /link コマンドを実行してください。",
 
     form_avatar_title: "アバタープレビュー",
     form_avatar_hint: "MCIDを入力するとスキンが表示されます",
@@ -67,27 +67,19 @@ const I18N_DATA = {
     placeholder_mcid: "例: Steve",
     hint_mcid: "大文字・小文字を正確に入力してください",
 
-    label_discord_id: "Discord ユーザー名",
-    placeholder_discord_id: "例: metasukech_52692",
-    hint_discord_id: "Discordのユーザー名（小文字・数字・アンダースコア）を入力してください",
-    link_discord_help: "Discordユーザー名の確認方法は？",
-
     label_role_grant: "付与されるロール",
     role_name_badge: "Verified Player",
-    role_id_note: "Role ID: 1568130111243554868",
 
-    btn_submit_verify: "認証してロールを受け取る",
-    btn_submitting_verify: "自動連携処理中...",
+    btn_generate_token: "認証トークンを発行する",
+    badge_token_ready: "トークン発行完了",
+    token_instruction: "Discordサーバーで以下のコマンドを送信すると、連携が完了しロールが自動付与されます。",
+    btn_i_linked: "連携を完了しました",
+    btn_reinput_mcid: "別のMinecraft IDを入力し直す",
 
-    // Verified Status Card
-    verified_status_badge: "認証済み",
-    verified_status_title: "認証が完了しています",
-    verified_status_desc: "この端末では現在Cookieによって連携情報が保存されています。",
-    info_mcid_label: "登録MCID",
-    info_discord_label: "登録Discord ユーザー名",
-    info_role_label: "付与ロール",
-    info_date_label: "認証日時",
-    admin_unlink_notice: "認証の解除は、Discordサーバー内でAdmin（管理者）などの権限保持者がロール（Verified Player）を外すことでのみ行われます。サイトからの解除操作はできません。",
+    // Verified / Unlink Status
+    verified_status_badge: "認証・連携完了",
+    unlink_token_desc: "Discordサーバーでロールが付与されています。連携を解除したい場合は、以下の解除用トークンを使用してDiscord上で解除してください。",
+    btn_reset_device: "この端末の保存状態をリセットする",
 
     // Discord ID Help Modal
     modal_help_title: "Discord ユーザー名の確認手順",
@@ -143,12 +135,12 @@ const I18N_DATA = {
     // Index How to verify
     how_tag: "VERIFICATION STEPS",
     how_heading: "Simple 3-Step Verification",
-    how_step_1_title: "1. Prepare Your Info",
-    how_step_1_desc: "Check your ArchMC in-game Minecraft username and your Discord username (e.g. metasukech_52692).",
-    how_step_2_title: "2. Submit on Auth Page",
-    how_step_2_desc: "Fill in the form and click verify. Your account is automatically linked.",
-    how_step_3_title: "3. Role Granted & Saved",
-    how_step_3_desc: "Your Discord account receives the community role (Role ID: 1568130111243554868). Status is saved in cookies.",
+    how_step_1_title: "1. Generate Token",
+    how_step_1_desc: "Enter your Minecraft ID on this site to generate your personal verification token.",
+    how_step_2_title: "2. Run /link in Discord",
+    how_step_2_desc: "Send /link token: [Your Token] in the Discord server.",
+    how_step_3_title: "3. Role Granted & Unlink Token",
+    how_step_3_desc: "Your role is instantly granted. An unlink token is then displayed on the site for future unlinking.",
 
     // Index Rules
     rules_tag: "RULES & GUIDELINES",
@@ -161,9 +153,9 @@ const I18N_DATA = {
     rule_3_desc: "Please use appropriate channels for specific languages and be welcoming to translation tools.",
 
     // Auth Page
-    auth_badge: "SECURE VERIFICATION",
+    auth_badge: "TOKEN VERIFICATION SYSTEM",
     auth_title: "ArchMC Player Verification",
-    auth_desc: "Link your Minecraft username and Discord username to automatically receive your community role. Unlinking is only performed by an Admin removing your role in Discord.",
+    auth_token_desc: "Enter your Minecraft ID to generate a verification token, then run /link in the Discord server.",
 
     form_avatar_title: "Skin Preview",
     form_avatar_hint: "Skin will appear when you enter your MCID",
@@ -172,27 +164,19 @@ const I18N_DATA = {
     placeholder_mcid: "e.g. Steve",
     hint_mcid: "Please match exact casing (capital/lowercase)",
 
-    label_discord_id: "Discord Username",
-    placeholder_discord_id: "e.g. metasukech_52692",
-    hint_discord_id: "Enter your Discord username (lowercase letters, numbers, underscores)",
-    link_discord_help: "How do I find my Discord username?",
-
     label_role_grant: "Role to be Granted",
     role_name_badge: "Verified Player",
-    role_id_note: "Role ID: 1568130111243554868",
 
-    btn_submit_verify: "Verify & Claim Role",
-    btn_submitting_verify: "Processing Auto-Link...",
+    btn_generate_token: "Generate Verification Token",
+    badge_token_ready: "Token Ready",
+    token_instruction: "Run the command below in the Discord server to complete verification and claim your role.",
+    btn_i_linked: "I have linked in Discord",
+    btn_reinput_mcid: "Enter a different Minecraft ID",
 
-    // Verified Status Card
-    verified_status_badge: "VERIFIED",
-    verified_status_title: "Account is Verified",
-    verified_status_desc: "This device is linked via cookie. Unlinking is handled exclusively by Admins in Discord.",
-    info_mcid_label: "Linked MCID",
-    info_discord_label: "Linked Discord Username",
-    info_role_label: "Granted Role",
-    info_date_label: "Verified Date",
-    admin_unlink_notice: "Unlinking is performed exclusively by Discord Administrators removing the 'Verified Player' role. Manual unlinking from this website is disabled.",
+    // Verified / Unlink Status
+    verified_status_badge: "VERIFIED & LINKED",
+    unlink_token_desc: "Your Discord account has been granted the verified role. If you wish to unlink, run the command below in Discord.",
+    btn_reset_device: "Reset stored state on this device",
 
     // Discord ID Help Modal
     modal_help_title: "How to Find Your Discord Username",
