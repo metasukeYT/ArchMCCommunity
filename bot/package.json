@@ -1,0 +1,16 @@
+{
+  "name": "archmc-discord-bot",
+  "version": "1.0.0",
+  "description": "ArchMC JP/EN Community Discord Auth Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "cors": "^2.8.5"
+  }
+}
+
