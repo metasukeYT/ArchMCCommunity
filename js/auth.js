@@ -137,7 +137,7 @@ function sha256Pure(ascii) {
     for (i = 0; i < 8; i++) {
         for (j = 3; j + 1; j--) {
             const b = (hash[i] >> (j * 8)) & 255;
-            result += ((b < 16) ? 0 : '') + b.toString(16);
+            result += ((b < 16) ? '0' : '') + b.toString(16);
         }
     }
     return result;
@@ -362,15 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('tokenGenerateForm');
     if (form) {
         form.addEventListener('submit', handleGenerateToken);
-    }
-
-    const submitBtn = document.getElementById('submitGenerateBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', (e) => {
-            const form = document.getElementById('tokenGenerateForm');
-            if (form && !form.checkValidity()) return; // allow html5 validation
-            handleGenerateToken(e);
-        });
     }
 
     const mcidInput = document.getElementById('mcidInput');
