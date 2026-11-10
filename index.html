@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchMC JP/EN Community - Official Portal</title>
+  <link rel="icon" href="img/favicon.png" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">
+          <img src="img/favicon.png" alt="ArchMC Logo">
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">ArchMC</span>
+          <span class="brand-subtitle" data-i18n="brand_sub">JP/EN Community</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="desktop-nav">
+        <a href="index.html" class="nav-link active" data-i18n="nav_home">ホーム</a>
+        <a href="auth.html" class="nav-link" data-i18n="nav_auth">プレイヤー認証</a>
+        <a href="#features" class="nav-link" data-i18n="nav_features">特徴</a>
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Language Dropdown -->
+        <div class="lang-dropdown-wrapper" id="langDropdown">
+          <button class="lang-btn" id="currentLangBtn" aria-label="Select Language">
+            <span class="flag-icon">🇯🇵</span>
+            <span class="lang-text">日本語</span>
+            <span class="dropdown-arrow">▾</span>
+          </button>
+          <ul class="lang-menu" id="langMenu">
+            <li class="lang-option" data-lang="ja"><span>🇯🇵</span> 日本語</li>
+            <li class="lang-option" data-lang="en"><span>🇺🇸</span> English</li>
+            <li class="lang-option" data-lang="zh"><span>🇨🇳</span> 简体中文</li>
+            <li class="lang-option" data-lang="ko"><span>🇰🇷</span> 한국어</li>
+          </ul>
+        </div>
+
+        <!-- Discord Button -->
+        <a href="https://discord.gg/uMGbzPVT77" target="_blank" rel="noopener noreferrer" class="discord-nav-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.894a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+          </svg>
+          <span data-i18n="nav_discord">Discord参加</span>
+        </a>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button class="hamburger" id="menuBtn" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Overlay & Drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="side-menu" id="sideMenu">
+    <ul class="mobile-menu-list">
+      <li><a href="index.html" class="active" data-i18n="nav_home">ホーム</a></li>
+      <li><a href="auth.html" data-i18n="nav_auth">プレイヤー認証</a></li>
+      <li><a href="#features" data-i18n="nav_features">特徴</a></li>
+    </ul>
+
+    <div class="mobile-bottom-actions">
+      <a href="https://discord.gg/uMGbzPVT77" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%;">
+        <span data-i18n="nav_discord">Discordに参加</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-badge-wrap">
+        <span class="badge badge-cyan" data-i18n="hero_badge">公式コミュニティポータル</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="title-gradient" data-i18n="hero_title_1">ArchMC</span>
+        <span data-i18n="hero_title_2">JP / EN Community</span>
+      </h1>
+
+      <p class="hero-subtitle" data-i18n="hero_desc">
+        ArchMCの日本人・海外プレイヤーをつなぐコミュニティです。ゲーム内アカウントとDiscordを認証連携して、限定ロールやイベントに参加しよう！
+      </p>
+
+      <!-- Call to Actions -->
+      <div class="hero-actions">
+        <a href="auth.html" class="btn btn-primary">
+          <span>🛡️</span>
+          <span data-i18n="hero_btn_verify">プレイヤー認証へ進む</span>
+        </a>
+        <a href="https://discord.gg/uMGbzPVT77" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.894a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+          </svg>
+          <span data-i18n="hero_btn_discord">Discordに参加する</span>
+        </a>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-number">
+            <span>🌐</span>
+            <span>JP / EN</span>
+          </div>
+          <div class="stat-label" data-i18n="hero_stat_bilingual">日米・多言語対応</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">
+            <span>🛡️</span>
+            <span>Role Sync</span>
+          </div>
+          <div class="stat-label">Verified Role: 1568130111243554868</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">
+            <span>⚡</span>
+            <span>24/7 Active</span>
+          </div>
+          <div class="stat-label" data-i18n="hero_stat_ping">低遅延・高応答</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="content-section" id="features">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="badge badge-cyan section-tag" data-i18n="features_tag">COMMUNITY FEATURES</span>
+        <h2 class="section-title" data-i18n="features_heading">コミュニティの魅力</h2>
+        <p class="section-desc" data-i18n="features_subheading">安心して楽しめる国際的なMinecraftコミュニティ</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrap">🌏</div>
+          <h3 class="feature-title" data-i18n="feat_1_title">日米・グローバル交流</h3>
+          <p class="feature-desc" data-i18n="feat_1_desc">日本語と英語をはじめ、多言語プレイヤーがPvPや建築、雑談を気軽に楽しめる環境を整えています。</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap">🔒</div>
+          <h3 class="feature-title" data-i18n="feat_2_title">ワンクリック認証システム</h3>
+          <p class="feature-desc" data-i18n="feat_2_desc">ArchMCのMCIDとDiscord IDを連携することで、認証者限定ロールを付与。円滑なコミュニティ運営を実現します。</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrap">🏆</div>
+          <h3 class="feature-title" data-i18n="feat_3_title">イベント & トーナメント</h3>
+          <p class="feature-desc" data-i18n="feat_3_desc">定期的な対戦トーナメントやカスタムマッチ、プレゼント企画などをコミュニティ主導で開催しています。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="content-section" style="background: rgba(10, 14, 24, 0.4);">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="badge badge-emerald section-tag" data-i18n="how_tag">VERIFICATION STEPS</span>
+        <h2 class="section-title" data-i18n="how_heading">認証の簡単な流れ</h2>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <span class="step-number-badge">STEP 01</span>
+          <h3 class="step-title" data-i18n="how_step_1_title">1. 情報を準備</h3>
+          <p class="step-desc" data-i18n="how_step_1_desc">ArchMCで使用しているMinecraft IDと、DiscordのユーザーID（17〜20桁の数字）を確認します。</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-number-badge">STEP 02</span>
+          <h3 class="step-title" data-i18n="how_step_2_title">2. 認証ページで送信</h3>
+          <p class="step-desc" data-i18n="how_step_2_desc">認証フォームに入力して送信ボタンを押すだけで、システムへ自動送信されます。</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-number-badge">STEP 03</span>
+          <h3 class="step-title" data-i18n="how_step_3_title">3. ロール付与完了</h3>
+          <p class="step-desc" data-i18n="how_step_3_desc">Discordサーバーで専用ロール（Role ID: 1568130111243554868）が付与されます。解除もいつでも可能です。</p>
+        </div>
+      </div>
+
+      <!-- CTA Inside section -->
+      <div class="cta-banner">
+        <h3 data-i18n="auth_title">ArchMC プレイヤー認証</h3>
+        <p data-i18n="auth_desc">Minecraft IDとDiscordユーザー名を連携し、コミュニティロールを自動で受け取りましょう。</p>
+        <a href="auth.html" class="btn btn-primary" style="padding: 14px 32px;">
+          <span>🛡️</span>
+          <span data-i18n="hero_btn_verify">プレイヤー認証へ進む</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <img src="img/favicon.png" alt="ArchMC Logo">
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">ArchMC</span>
+            <span class="brand-subtitle" data-i18n="brand_sub">JP/EN Community</span>
+          </div>
+        </div>
+        <p data-i18n="footer_text">ArchMC JP/EN Community. 非公式ファンコミュニティサイトです。MinecraftおよびMojang Studiosとは関連ありません。</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 data-i18n="footer_quick_links">クイックリンク</h4>
+        <ul class="footer-links">
+          <li><a href="index.html" data-i18n="nav_home">ホーム</a></li>
+          <li><a href="auth.html" data-i18n="nav_auth">プレイヤー認証</a></li>
+          <li><a href="#features" data-i18n="nav_features">特徴</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 data-i18n="footer_community">コミュニティ</h4>
+        <ul class="footer-links">
+          <li><a href="https://discord.gg/uMGbzPVT77" target="_blank" rel="noopener noreferrer">Community Discord</a></li>
+          <li><a href="https://archmc.net" target="_blank" rel="noopener noreferrer">ArchMC Server</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; 2026 ArchMC JP/EN Community. All rights reserved.</span>
+      <span>Role ID: 1568130111243554868</span>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
